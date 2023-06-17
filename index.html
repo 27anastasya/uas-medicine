@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Medicine Vani</title>
+      <style>
+  body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 20px;
+    background-color: #f4f4f4;
+  }
+
+  h1 {
+    color: #333;
+    text-align: center;
+    margin-bottom: 20px;
+  }
+
+  form {
+    margin-bottom: 20px;
+  }
+
+  label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+  }
+
+  input[type="text"],
+  input[type="number"] {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+  }
+
+  button {
+    padding: 10px 20px;
+    background-color: #4caf50;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-right: 10px;
+  }
+
+  button.reset {
+    background-color: #f44336;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  th,
+  td {
+    padding: 8px;
+    border: 1px solid #ddd;
+    text-align: left;
+  }
+
+  th {
+    background-color: #4caf50;
+    color: #fff;
+  }
+
+  tr:nth-child(even) {
+    background-color: #f2f2f2;
+  }
+
+  tr:hover {
+    background-color: #ddd;
+  }
+
+  .error {
+    color: red;
+    margin-bottom: 10px;
+  }
+</style>
+
+    </style>
+  </head>
+
+  <body>
+    <h1>MEDICINE VANI</h1>
+    <form>
+      <label for="nama_obat">Nama Obat:</label><br />
+      <input type="text" id="nama_obat" name="nama_obat" required /><br />
+
+      <label for="jenis_obat">Jenis Obat:</label><br />
+      <input type="text" id="jenis_obat" name="jenis_obat" required /><br />
+
+      <label for="produsen">Produsen:</label><br />
+      <input type="text" id="produsen" name="produsen" required /><br />
+
+      <label for="harga">Harga:</label><br />
+      <input type="number" id="harga" name="harga" required /><br />
+
+      <label for="stok">Stok:</label><br />
+      <input type="number" id="stok" name="stok" required /><br />
+
+      <button type="button" onclick="saveData()" id="button">Simpan</button>
+      <button class="reset" onclick="resetData()">Reset</button>
+    </form>
+
+    <h1>Tabel Daftar Obat</h1>
+    <table>
+      <thead>
+        <tr>
+          <th>No.</th>
+          <th>Nama Obat</th>
+          <th>Jenis Obat</th>
+          <th>Produsen</th>
+          <th>Harga</th>
+          <th>Stok</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="medicines"></tbody>
+    </table>
+
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+
+    <script>
+      const saveData = async () => {
+        let nama_obatForm = document.getElementById("nama_obat").value;
+        let jenis_obatForm = document.getElementById("jenis_obat").value;
+        let produsenForm = document.getElementById("produsen").value;
+        let hargaForm = document.getElementById("harga").value;
+        let stokForm = document.getElementById("stok").value;
+        await axios
+          .post("http://103.163.110.11:3031/medicines", {
+            nama_obat: nama_obatForm,
+            jenis_obat: jenis_obatForm,
+            produsen: produsenForm,
+            harga: hargaForm,
+            stok: stokForm,
+          })
+          .then((response) => {
+            alert("Data berhasil disimpan!");
+            getMedicines();
+          })
+          .catch((error) => {
+            console.log(error.message);
+          });
+      };
+
+      const getMedicines = async () => {
+        await axios
+          .get("http://103.163.110.11:3031/medicines")
+          .then((response) => {
+            let bucket = "";
+            let medicines = response.data;
+            medicines.forEach((medicine, i) => {
+              bucket += `
+              <tr>
+                <td>${i + 1}</td>
+                <td>${medicine.nama_obat}</td>
+                <td>${medicine.jenis_obat}</td>
+                <td>${medicine.produsen}</td>
+                <td>${medicine.harga}</td>
+                <td>${medicine.stok}</td>
+                <td>
+                  <button onclick="editData('${medicine.id}','${
+                medicine.nama_obat
+              }','${medicine.jenis_obat}','${medicine.produsen}','${
+                medicine.harga
+              }','${medicine.stok}')">Edit</button>
+                  <button onclick="deleteData(${medicine.id})">Delete</button>
+                </td>
+              </tr>
+            `;
+            });
+            document.getElementById("medicines").innerHTML = bucket;
+          })
+          .catch((error) => {
+            console.log(error.message);
+          });
+      };
+      getMedicines();
+
+      const deleteData = async (id) => {
+        await axios
+          .delete(`http://103.163.110.11:3031/medicines/${id}`)
+          .then((response) => {
+            alert("Data berhasil dihapus");
+            getMedicines();
+          })
+          .catch((error) => {
+            console.log(error.message);
+          });
+      };
+
+      const editData = (id, nama_obat, jenis_obat, produsen, harga, stok) => {
+        document.getElementById("nama_obat").value = nama_obat;
+        document.getElementById("jenis_obat").value = jenis_obat;
+        document.getElementById("produsen").value = produsen;
+        document.getElementById("harga").value = harga;
+        document.getElementById("stok").value = stok;
+        document.getElementById("button").innerText = "Update";
+        document
+          .getElementById("button")
+          .setAttribute("onclick", `updateData(${id})`);
+      };
+
+      const updateData = async (id) => {
+        let nama_obatForm = document.getElementById("nama_obat").value;
+        let jenis_obatForm = document.getElementById("jenis_obat").value;
+        let produsenForm = document.getElementById("produsen").value;
+        let hargaForm = document.getElementById("harga").value;
+        let stokForm = document.getElementById("stok").value;
+        await axios
+          .patch(`http://103.163.110.11:3031/medicines/${id}`, {
+            nama_obat: nama_obatForm,
+            jenis_obat: jenis_obatForm,
+            produsen: produsenForm,
+            harga: hargaForm,
+            stok: stokForm,
+          })
+          .then((response) => {
+            alert("Data berhasil diubah");
+            getMedicines();
+            resetForm();
+          })
+          .catch((error) => {
+            console.log(error.message);
+          });
+      };
+
+      const resetForm = () => {
+        document.getElementById("nama_obat").value = "";
+        document.getElementById("jenis_obat").value = "";
+        document.getElementById("produsen").value = "";
+        document.getElementById("harga").value = "";
+        document.getElementById("stok").value = "";
+        document.getElementById("button").innerText = "Save";
+        document.getElementById("button").setAttribute("onclick", "saveData()");
+      };
+    </script>
+  </body>
+</html>
